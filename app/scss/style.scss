@@ -1,0 +1,46 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+$top_panel_height: 60px;
+
+iframe {
+    position: absolute;
+    top: $top_panel_height;
+    left: 0;
+    width: 100%;
+    height: calc(100vh - #{$top_panel_height});
+}
+
+.admin_panel {
+    display: flex;
+    height: $top_panel_height;
+    justify-content: space-between;
+    padding: 10px 3rem 10px 3rem;
+    border-bottom: 2px solid black;
+    align-items: center;
+}
+.logo {
+    font-size: 2rem;
+}
+
+.loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba($color: #000000, $alpha: 0.4);
+    visibility: hidden;
+    opacity: 0;
+    transition: 0.8s all;
+    &.active {
+        visibility: visible;
+        opacity: 1;
+    }
+}
