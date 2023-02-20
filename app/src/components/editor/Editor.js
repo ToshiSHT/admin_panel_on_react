@@ -9,19 +9,23 @@ import {
 } from '../../helpers/dom-helpers.js';
 import '../../helpers/iframeLoader.js';
 import { textEdit } from '../../helpers/textEdit.js';
-import { Button, Space } from 'antd';
 import ModalSave from '../modalSave/ModalSave.js';
 import Spinner from '../spinner/Spinner.js';
 import ChooseModal from '../chooseModal/ChooseModal.js';
+import DevPanel from '../devPanel/DevPanel.js';
+import { ExclamationCircleFilled } from '@ant-design/icons';
+import { Modal } from 'antd';
 
 const Editor = () => {
-    const [currentPage, setCurrentPage] = useState('');
     const [pageList, setPageList] = useState([]);
+    const [backupList, setBackupList] = useState([]);
     const [openModalSave, setOpenModalSave] = useState(false);
     const [openModalChoose, setOpenModalChoose] = useState(false);
+    const [openModalBackup, setOpenModalBackup] = useState(false);
     const [loading, setLoading] = useState(true);
+    const { confirm } = Modal;
 
-    const startPage = 'index.html';
+    const currentPage = useRef('index.html');
     const virtualDom = useRef('');
     const iframe = useRef('');
 
@@ -33,11 +37,11 @@ const Editor = () => {
     };
 
     useEffect(() => {
-        init(null, startPage, isLoaded);
+        init(null, currentPage.current, isLoaded);
     }, []);
     const open = (page, isLoaded) => {
         axios
-            .get(`../${page}`)
+            .get(`../${page}?rnd=${Math.random()}`)
             .then((res) => parseStringToDom(res.data))
             .then(wrappTextNodes)
             .then((dom) => {
@@ -51,6 +55,8 @@ const Editor = () => {
             .then(() => enableEditing())
             .then(() => injectStyles())
             .then(isLoaded);
+
+        loadBackupList();
     };
     const init = (e, page) => {
         if (e) {
@@ -58,23 +64,46 @@ const Editor = () => {
             isLoading();
         }
         open(page, isLoaded);
-        setCurrentPage(page);
-
+        currentPage.current = page;
         loadPageList();
+        loadBackupList();
     };
 
-    function onSave(success, error) {
+    const restoreBackup = (e, backup) => {
+        if (e) {
+            e.preventDefault();
+        }
+        confirm({
+            title: 'Вы точно хотите восстановить резервную копию?',
+            icon: <ExclamationCircleFilled />,
+            content: 'Все не сохраненные данные будут потеряны!',
+            okText: 'Восстановить',
+            okType: 'danger',
+            cancelText: 'Отмена',
+            onOk() {
+                isLoading();
+                axios
+                    .post('./api/restoreBackup.php', {
+                        page: currentPage.current,
+                        file: backup,
+                    })
+                    .then(open(currentPage.current, isLoaded));
+            },
+        });
+    };
+
+    const onSave = async (success, error) => {
         isLoading();
-        console.log(virtualDom.current);
         const newDom = virtualDom.current.cloneNode(virtualDom.current);
         unWrappTextNode(newDom);
         const html = serializeDOMToString(newDom);
-        axios
-            .post('./api/savePage.php', { pageName: currentPage, html })
+        await axios
+            .post('./api/savePage.php', { pageName: currentPage.current, html })
             .then(success)
+            .then(loadBackupList)
             .catch(error)
             .finally(isLoaded);
-    }
+    };
 
     const enableEditing = () => {
         iframe.current.contentDocument.body
@@ -91,15 +120,28 @@ const Editor = () => {
     const loadPageList = () => {
         axios.get('./api/pageList.php').then((res) => setPageList(res.data));
     };
+    const loadBackupList = () => {
+        axios
+            .get('./backups/backups.json')
+            .then((res) =>
+                setBackupList(
+                    res.data.filter(
+                        (backup) => backup.page === currentPage.current
+                    )
+                )
+            );
+    };
 
     const injectStyles = () => {
         const style = iframe.current.contentDocument.createElement('style');
         style.innerHTML = `
         text-editor:hover {
+            overflow-y: visible;
             outline: 4px solid #aed6dc;
             outline-offset: 6px;
         }
         text-editor:focus {
+            overflow-y: visible;
             outline: 4px solid #ff9a8d;
             outline-offset: 6px;
         }`;
@@ -112,21 +154,18 @@ const Editor = () => {
     const onToggleModalChoose = () => {
         setOpenModalChoose((prev) => !prev);
     };
+    const onToggleModalBackup = () => {
+        setOpenModalBackup((prev) => !prev);
+    };
     let spinner = loading ? <Spinner active /> : <Spinner />;
     return (
         <>
-            <div className="admin_panel">
-                <div className="logo">ToshiSHT admin panel</div>
-                <Space>
-                    <Button type="primary" onClick={onToggleModalChoose}>
-                        Выбор страницы
-                    </Button>
-                    <Button type="primary" onClick={onToggleModalSave}>
-                        Сохранить
-                    </Button>
-                </Space>
-            </div>
             <iframe ref={iframe} frameBorder="0"></iframe>
+            <DevPanel
+                onToggleModalSave={onToggleModalSave}
+                onToggleModalChoose={onToggleModalChoose}
+                onToggleModalBackup={onToggleModalBackup}
+            />
             {spinner}
             <ModalSave
                 onSave={onSave}
@@ -134,10 +173,18 @@ const Editor = () => {
                 onToggleModalSave={onToggleModalSave}
             />
             <ChooseModal
-                openModalChoose={openModalChoose}
-                onToggleModalChoose={onToggleModalChoose}
+                openModal={openModalChoose}
+                onToggleModal={onToggleModalChoose}
                 data={pageList}
                 redirect={init}
+                title="Выберите страницу для редактирования :"
+            />
+            <ChooseModal
+                openModal={openModalBackup}
+                onToggleModal={onToggleModalBackup}
+                data={backupList}
+                redirect={restoreBackup}
+                title="Выберите Backup для восстановления :"
             />
         </>
     );
