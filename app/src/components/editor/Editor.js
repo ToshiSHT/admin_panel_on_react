@@ -9,13 +9,16 @@ import {
 } from '../../helpers/dom-helpers.js';
 import '../../helpers/iframeLoader.js';
 import { textEdit } from '../../helpers/textEdit.js';
-import { Button, message } from 'antd';
+import { Button, Space } from 'antd';
 import ModalSave from '../modalSave/ModalSave.js';
 import Spinner from '../spinner/Spinner.js';
+import ChooseModal from '../chooseModal/ChooseModal.js';
 
 const Editor = () => {
     const [currentPage, setCurrentPage] = useState('');
-    const [openModal, setOpenModal] = useState(false);
+    const [pageList, setPageList] = useState([]);
+    const [openModalSave, setOpenModalSave] = useState(false);
+    const [openModalChoose, setOpenModalChoose] = useState(false);
     const [loading, setLoading] = useState(true);
 
     const startPage = 'index.html';
@@ -30,12 +33,9 @@ const Editor = () => {
     };
 
     useEffect(() => {
-        init(startPage, isLoaded);
+        init(null, startPage, isLoaded);
     }, []);
-
-    const init = (page, isLoaded) => {
-        setCurrentPage(page);
-
+    const open = (page, isLoaded) => {
         axios
             .get(`../${page}`)
             .then((res) => parseStringToDom(res.data))
@@ -46,13 +46,24 @@ const Editor = () => {
             })
             .then(serializeDOMToString)
             .then((html) => axios.post('./api/saveTempPage.php', { html }))
-            .then(() => iframe.current.load('../temp.html'))
+            .then(() => iframe.current.load('../aadawqe324we1ras.html'))
+            .then(() => axios.post('./api/deleteTempPage.php'))
             .then(() => enableEditing())
             .then(() => injectStyles())
             .then(isLoaded);
     };
+    const init = (e, page) => {
+        if (e) {
+            e.preventDefault();
+            isLoading();
+        }
+        open(page, isLoaded);
+        setCurrentPage(page);
 
-    function save(success, error) {
+        loadPageList();
+    };
+
+    function onSave(success, error) {
         isLoading();
         console.log(virtualDom.current);
         const newDom = virtualDom.current.cloneNode(virtualDom.current);
@@ -63,7 +74,6 @@ const Editor = () => {
             .then(success)
             .catch(error)
             .finally(isLoaded);
-        onOpenModal();
     }
 
     const enableEditing = () => {
@@ -76,6 +86,10 @@ const Editor = () => {
                 );
                 textEdit(elem, virtualElem);
             });
+    };
+
+    const loadPageList = () => {
+        axios.get('./api/pageList.php').then((res) => setPageList(res.data));
     };
 
     const injectStyles = () => {
@@ -92,24 +106,38 @@ const Editor = () => {
         iframe.current.contentDocument.head.appendChild(style);
     };
 
-    const onOpenModal = () => {
-        setOpenModal((prev) => !prev);
+    const onToggleModalSave = () => {
+        setOpenModalSave((prev) => !prev);
+    };
+    const onToggleModalChoose = () => {
+        setOpenModalChoose((prev) => !prev);
     };
     let spinner = loading ? <Spinner active /> : <Spinner />;
     return (
         <>
             <div className="admin_panel">
                 <div className="logo">ToshiSHT admin panel</div>
-                <Button type="primary" onClick={onOpenModal}>
-                    Сохранить
-                </Button>
+                <Space>
+                    <Button type="primary" onClick={onToggleModalChoose}>
+                        Выбор страницы
+                    </Button>
+                    <Button type="primary" onClick={onToggleModalSave}>
+                        Сохранить
+                    </Button>
+                </Space>
             </div>
             <iframe ref={iframe} frameBorder="0"></iframe>
             {spinner}
             <ModalSave
-                openModal={openModal}
-                closemodal={onOpenModal}
-                save={save}
+                onSave={onSave}
+                openModalSave={openModalSave}
+                onToggleModalSave={onToggleModalSave}
+            />
+            <ChooseModal
+                openModalChoose={openModalChoose}
+                onToggleModalChoose={onToggleModalChoose}
+                data={pageList}
+                redirect={init}
             />
         </>
     );

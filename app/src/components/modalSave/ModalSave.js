@@ -1,8 +1,10 @@
 import React from 'react';
 import { Button, Modal, message } from 'antd';
-const ModalSave = ({ openModal, save, closemodal }) => {
+const ModalSave = ({ openModalSave, onSave, onToggleModalSave }) => {
     const [messageApi, contextHolder] = message.useMessage();
-    const onSave = () => {
+
+    const onSaveModal = () => {
+        onToggleModalSave();
         const saveSuccess = () => {
             messageApi.open({
                 type: 'success',
@@ -18,20 +20,20 @@ const ModalSave = ({ openModal, save, closemodal }) => {
             });
             console.log(asdsad);
         };
-        save(saveSuccess, saveError);
+        onSave(saveSuccess, saveError);
     };
     return (
         <>
             {contextHolder}
             <Modal
-                open={openModal}
+                open={openModalSave}
                 title="Сохранение"
-                onCancel={closemodal}
+                onCancel={onToggleModalSave}
                 footer={[
-                    <Button key="back" onClick={closemodal}>
+                    <Button key="back" onClick={onToggleModalSave}>
                         Назад
                     </Button>,
-                    <Button key="submit" type="primary" onClick={onSave}>
+                    <Button key="submit" type="primary" onClick={onSaveModal}>
                         Сохранить
                     </Button>,
                 ]}
