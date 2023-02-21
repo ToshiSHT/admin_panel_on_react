@@ -6,9 +6,7 @@ const ChooseModal = ({ openModal, onToggleModal, data, redirect, title }) => {
         redirect(e, item);
         onToggleModal();
     };
-    useEffect(() => {
-        console.log(data);
-    }, [data]);
+    useEffect(() => {}, [data]);
 
     const renderPagelist = (item) => {
         if (item.time) {

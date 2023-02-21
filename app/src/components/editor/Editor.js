@@ -15,6 +15,7 @@ import ChooseModal from '../chooseModal/ChooseModal.js';
 import DevPanel from '../devPanel/DevPanel.js';
 import { ExclamationCircleFilled } from '@ant-design/icons';
 import { Modal } from 'antd';
+import EditorMeta from '../editorMeta/EditorMeta.js';
 
 const Editor = () => {
     const [pageList, setPageList] = useState([]);
@@ -22,6 +23,7 @@ const Editor = () => {
     const [openModalSave, setOpenModalSave] = useState(false);
     const [openModalChoose, setOpenModalChoose] = useState(false);
     const [openModalBackup, setOpenModalBackup] = useState(false);
+    const [openModalMeta, setOpenModalMeta] = useState(false);
     const [loading, setLoading] = useState(true);
     const { confirm } = Modal;
 
@@ -157,6 +159,9 @@ const Editor = () => {
     const onToggleModalBackup = () => {
         setOpenModalBackup((prev) => !prev);
     };
+    const onToggleModalMeta = () => {
+        setOpenModalMeta((prev) => !prev);
+    };
     let spinner = loading ? <Spinner active /> : <Spinner />;
     return (
         <>
@@ -165,6 +170,7 @@ const Editor = () => {
                 onToggleModalSave={onToggleModalSave}
                 onToggleModalChoose={onToggleModalChoose}
                 onToggleModalBackup={onToggleModalBackup}
+                onToggleModalMeta={onToggleModalMeta}
             />
             {spinner}
             <ModalSave
@@ -186,6 +192,13 @@ const Editor = () => {
                 redirect={restoreBackup}
                 title="Выберите Backup для восстановления :"
             />
+            {virtualDom.current ? (
+                <EditorMeta
+                    openModal={openModalMeta}
+                    onToggleModal={onToggleModalMeta}
+                    virtualDom={virtualDom.current}
+                />
+            ) : null}
         </>
     );
 };
