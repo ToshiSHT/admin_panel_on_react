@@ -11,9 +11,7 @@ const EditorMeta = ({ openModal, onToggleModal, virtualDom }) => {
         description: '',
     });
     const { TextArea } = Input;
-    const onSaveModal = () => {
-        onToggleModal();
-    };
+
     useEffect(() => {
         getMeta(virtualDom);
     }, [virtualDom]);

@@ -1,30 +1,12 @@
 import React from 'react';
-import { Button, Modal, message } from 'antd';
+import { Button, Modal } from 'antd';
 const ModalSave = ({ openModalSave, onSave, onToggleModalSave }) => {
-    const [messageApi, contextHolder] = message.useMessage();
-
     const onSaveModal = () => {
         onToggleModalSave();
-        const saveSuccess = () => {
-            messageApi.open({
-                type: 'success',
-                content: 'Изменения успешно сохранены!',
-                duration: 3,
-            });
-        };
-        const saveError = () => {
-            messageApi.open({
-                type: 'error',
-                content: 'Изменения не сохранены',
-                duration: 3,
-            });
-            console.log(asdsad);
-        };
-        onSave(saveSuccess, saveError);
+        onSave();
     };
     return (
         <>
-            {contextHolder}
             <Modal
                 open={openModalSave}
                 title="Сохранение"

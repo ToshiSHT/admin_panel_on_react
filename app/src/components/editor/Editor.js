@@ -6,6 +6,8 @@ import {
     parseStringToDom,
     wrappTextNodes,
     unWrappTextNode,
+    wrapImages,
+    unwrapImages,
 } from '../../helpers/dom-helpers.js';
 import '../../helpers/iframeLoader.js';
 import { textEdit } from '../../helpers/textEdit.js';
@@ -14,10 +16,13 @@ import Spinner from '../spinner/Spinner.js';
 import ChooseModal from '../chooseModal/ChooseModal.js';
 import DevPanel from '../devPanel/DevPanel.js';
 import { ExclamationCircleFilled } from '@ant-design/icons';
-import { Modal } from 'antd';
+import { Modal, message } from 'antd';
 import EditorMeta from '../editorMeta/EditorMeta.js';
+import { editorImage } from '../../helpers/editorImage.js';
+import { natification } from '../../helpers/natification.js';
 
 const Editor = () => {
+    const [messageApi, contextHolder] = message.useMessage();
     const [pageList, setPageList] = useState([]);
     const [backupList, setBackupList] = useState([]);
     const [openModalSave, setOpenModalSave] = useState(false);
@@ -46,6 +51,7 @@ const Editor = () => {
             .get(`../${page}?rnd=${Math.random()}`)
             .then((res) => parseStringToDom(res.data))
             .then(wrappTextNodes)
+            .then(wrapImages)
             .then((dom) => {
                 virtualDom.current = dom;
                 return dom;
@@ -94,16 +100,19 @@ const Editor = () => {
         });
     };
 
-    const onSave = async (success, error) => {
+    const onSave = async () => {
         isLoading();
         const newDom = virtualDom.current.cloneNode(virtualDom.current);
         unWrappTextNode(newDom);
+        unwrapImages(newDom);
         const html = serializeDOMToString(newDom);
         await axios
             .post('./api/savePage.php', { pageName: currentPage.current, html })
-            .then(success)
+            .then(() =>
+                natification('success', 'Успешно сохранено!', messageApi)
+            )
             .then(loadBackupList)
-            .catch(error)
+            .catch(() => natification('error', 'Ошибка сохранения', messageApi))
             .finally(isLoaded);
     };
 
@@ -116,6 +125,15 @@ const Editor = () => {
                     `[nodeid="${id}"]`
                 );
                 textEdit(elem, virtualElem);
+            });
+        iframe.current.contentDocument.body
+            .querySelectorAll('[editimgid]')
+            .forEach((elem) => {
+                const id = elem.getAttribute('editimgid');
+                const virtualElem = virtualDom.current.body.querySelector(
+                    `[editimgid="${id}"]`
+                );
+                editorImage(elem, virtualElem, isLoading, isLoaded, messageApi);
             });
     };
 
@@ -146,7 +164,12 @@ const Editor = () => {
             overflow-y: visible;
             outline: 4px solid #ff9a8d;
             outline-offset: 6px;
-        }`;
+        }
+        [editimgid]:hover {
+             outline: 4px solid #aed6dc;
+            outline-offset: 6px;
+        }
+        `;
         iframe.current.contentDocument.head.appendChild(style);
     };
 
@@ -165,7 +188,14 @@ const Editor = () => {
     let spinner = loading ? <Spinner active /> : <Spinner />;
     return (
         <>
+            {contextHolder}
             <iframe ref={iframe} frameBorder="0"></iframe>
+            <input
+                id="img-upload"
+                type="file"
+                accept="image/*"
+                style={{ display: 'none' }}
+            ></input>
             <DevPanel
                 onToggleModalSave={onToggleModalSave}
                 onToggleModalChoose={onToggleModalChoose}

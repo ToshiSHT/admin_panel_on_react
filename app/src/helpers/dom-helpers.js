@@ -32,6 +32,19 @@ export const wrappTextNodes = (dom) => {
     return dom;
 };
 
+export const wrapImages = (dom) => {
+    dom.body.querySelectorAll('img').forEach((item, i) => {
+        item.setAttribute('editimgid', i);
+    });
+    return dom;
+};
+
+export const unwrapImages = (dom) => {
+    dom.body.querySelectorAll('[editimgid]').forEach((item) => {
+        item.removeAttribute('editimgid');
+    });
+};
+
 export const parseStringToDom = (str) => {
     // парсим исходный документ в новую DOM структуру
     const parser = new DOMParser();
