@@ -1,6 +1,6 @@
-import React from "react";
-import ReactDOM from "react-dom/client";
-import Editor from "./components/editor/Editor";
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import Editor from './components/editor/Editor';
 
-const root = ReactDOM.createRoot(document.getElementById("root"));
+const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(<Editor />);

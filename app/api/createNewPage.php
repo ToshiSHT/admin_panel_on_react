@@ -5,5 +5,5 @@ $newFile = "../../" . $_POST["name"] . ".html"; // путь
 if (file_exists($newFile)) {
     header("HTTP/1.0 400 Bad Request");
 } else {
-    fopen($newFile, "w"); // создание файла
+    fopen($newFile, "w"); // создание файла  
 }

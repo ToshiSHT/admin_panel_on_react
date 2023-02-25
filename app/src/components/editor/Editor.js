@@ -20,6 +20,7 @@ import { Modal, message } from 'antd';
 import EditorMeta from '../editorMeta/EditorMeta.js';
 import { editorImage } from '../../helpers/editorImage.js';
 import { natification } from '../../helpers/natification.js';
+import Login from '../login/Login.js';
 
 const Editor = () => {
     const [messageApi, contextHolder] = message.useMessage();
@@ -29,6 +30,7 @@ const Editor = () => {
     const [openModalChoose, setOpenModalChoose] = useState(false);
     const [openModalBackup, setOpenModalBackup] = useState(false);
     const [openModalMeta, setOpenModalMeta] = useState(false);
+    const [auth, setAuth] = useState(false);
     const [loading, setLoading] = useState(true);
     const { confirm } = Modal;
 
@@ -42,10 +44,20 @@ const Editor = () => {
     const isLoaded = () => {
         setLoading(false);
     };
+    const checkedAuth = () => {
+        axios.get('./api/checkAuth.php').then((res) => {
+            console.log(res.data);
+            setAuth(res.data.auth);
+        });
+    };
+
+    useEffect(() => {
+        checkedAuth();
+    }, []);
 
     useEffect(() => {
         init(null, currentPage.current, isLoaded);
-    }, []);
+    }, [auth]);
     const open = (page, isLoaded) => {
         axios
             .get(`../${page}?rnd=${Math.random()}`)
@@ -71,10 +83,12 @@ const Editor = () => {
             e.preventDefault();
             isLoading();
         }
-        open(page, isLoaded);
-        currentPage.current = page;
-        loadPageList();
-        loadBackupList();
+        if (auth) {
+            open(page, isLoaded);
+            currentPage.current = page;
+            loadPageList();
+            loadBackupList();
+        }
     };
 
     const restoreBackup = (e, backup) => {
@@ -186,6 +200,10 @@ const Editor = () => {
         setOpenModalMeta((prev) => !prev);
     };
     let spinner = loading ? <Spinner active /> : <Spinner />;
+    if (!auth) {
+        return <Login setAuth={setAuth} />;
+    }
+
     return (
         <>
             {contextHolder}

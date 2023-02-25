@@ -44,3 +44,34 @@ iframe {
         opacity: 1;
     }
 }
+
+.login-container {
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    background-color: rgba($color: #000000, $alpha: 0.6);
+    z-index: 1000;
+    .login {
+        width: 400px;
+        height: 250px;
+        display: flex;
+        background-color: rgba($color: #ffffff, $alpha: 0.7);
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        border-radius: 5px;
+        &_title {
+            margin-bottom: 5px;
+        }
+
+        .login-form {
+            min-width: 300px;
+            display: block;
+        }
+    }
+}
