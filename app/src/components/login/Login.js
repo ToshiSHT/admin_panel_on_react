@@ -1,13 +1,32 @@
-import React from 'react';
-import { Button, Checkbox, Form, Input } from 'antd';
+import React, { useEffect, useState } from 'react';
+import { Button, Form, Input, message } from 'antd';
 import { LockOutlined, UserOutlined } from '@ant-design/icons';
 import axios from 'axios';
 
 const Login = ({ setAuth }) => {
+    const [loginError, setLoginError] = useState({
+        messageError: false,
+        validateStatus: false,
+    });
+    useEffect(() => {
+        if (loginError.messageError) {
+            message.error('Неверный логин или пароль!');
+            setLoginError((prev) => {
+                return { ...prev, messageError: false };
+            });
+        }
+    }, [loginError]);
+
     const onFinish = ({ username, password }) => {
         axios
             .post('./api/login.php', { username: username, password: password })
-            .then((res) => setAuth(res.data.auth));
+            .then((res) => {
+                setAuth(res.data.auth);
+                setLoginError({
+                    messageError: true,
+                    validateStatus: true,
+                });
+            });
     };
 
     return (
@@ -22,10 +41,17 @@ const Login = ({ setAuth }) => {
                 >
                     <Form.Item
                         name="username"
+                        validateStatus={
+                            loginError.validateStatus ? 'error' : 'success'
+                        }
                         rules={[
                             {
                                 required: true,
                                 message: 'Пожалуйста введите имя!',
+                            },
+                            {
+                                boolean: { loginError },
+                                message: ' введите имя!',
                             },
                         ]}
                     >
@@ -38,6 +64,9 @@ const Login = ({ setAuth }) => {
                     </Form.Item>
                     <Form.Item
                         name="password"
+                        validateStatus={
+                            loginError.validateStatus ? 'error' : 'success'
+                        }
                         rules={[
                             {
                                 required: true,
