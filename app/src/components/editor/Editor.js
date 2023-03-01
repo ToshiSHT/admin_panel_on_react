@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { useEffect, useRef, useState } from 'react';
+import { useDispatch } from 'react-redux';
 import React from 'react';
 import {
     serializeDOMToString,
@@ -11,29 +12,23 @@ import {
 } from '../../helpers/dom-helpers.js';
 import '../../helpers/iframeLoader.js';
 import { textEdit } from '../../helpers/textEdit.js';
-import ModalSave from '../modalSave/ModalSave.js';
 import Spinner from '../spinner/Spinner.js';
-import ChooseModal from '../chooseModal/ChooseModal.js';
 import DevPanel from '../devPanel/DevPanel.js';
 import { ExclamationCircleFilled } from '@ant-design/icons';
 import { Modal, message } from 'antd';
-import EditorMeta from '../editorMeta/EditorMeta.js';
 import { editorImage } from '../../helpers/editorImage.js';
 import { natification } from '../../helpers/natification.js';
 import Login from '../login/Login.js';
+import Modals from '../allModals/Modals/Modals.js';
+import injectStyles from '../../helpers/injectStyles.js';
+import { loadBackupList, loadPageList } from '../../helpers/loadsLists.js';
 
 const Editor = () => {
     const [messageApi, contextHolder] = message.useMessage();
-    const [pageList, setPageList] = useState([]);
-    const [backupList, setBackupList] = useState([]);
-    const [openModalSave, setOpenModalSave] = useState(false);
-    const [openModalChoose, setOpenModalChoose] = useState(false);
-    const [openModalBackup, setOpenModalBackup] = useState(false);
-    const [openModalMeta, setOpenModalMeta] = useState(false);
-    const [openModalLogout, setOpenModalLogout] = useState(false);
     const [auth, setAuth] = useState(false);
     const [loading, setLoading] = useState(true);
     const { confirm } = Modal;
+    const dispatch = useDispatch();
 
     const currentPage = useRef('index.html');
     const virtualDom = useRef('');
@@ -74,10 +69,10 @@ const Editor = () => {
             .then(() => iframe.current.load('../aadawqe324we1ras.html'))
             .then(() => axios.post('./api/deleteTempPage.php'))
             .then(() => enableEditing())
-            .then(() => injectStyles())
+            .then(() => injectStyles(iframe.current))
             .then(isLoaded);
 
-        loadBackupList();
+        loadBackupList(currentPage.current, dispatch);
     };
     const init = (e, page) => {
         if (e) {
@@ -87,8 +82,8 @@ const Editor = () => {
         if (auth) {
             open(page, isLoaded);
             currentPage.current = page;
-            loadPageList();
-            loadBackupList();
+            loadPageList(dispatch);
+            loadBackupList(currentPage.current, dispatch);
         }
     };
 
@@ -126,7 +121,7 @@ const Editor = () => {
             .then(() =>
                 natification('success', 'Успешно сохранено!', messageApi)
             )
-            .then(loadBackupList)
+            .then(() => loadBackupList(currentPage.current, dispatch))
             .catch(() => natification('error', 'Ошибка сохранения', messageApi))
             .finally(isLoaded);
     };
@@ -152,63 +147,12 @@ const Editor = () => {
             });
     };
 
-    const loadPageList = () => {
-        axios.get('./api/pageList.php').then((res) => setPageList(res.data));
-    };
-    const loadBackupList = () => {
-        axios
-            .get('./backups/backups.json')
-            .then((res) =>
-                setBackupList(
-                    res.data.filter(
-                        (backup) => backup.page === currentPage.current
-                    )
-                )
-            );
-    };
-
-    const injectStyles = () => {
-        const style = iframe.current.contentDocument.createElement('style');
-        style.innerHTML = `
-        text-editor:hover {
-            overflow-y: visible;
-            outline: 4px solid #aed6dc;
-            outline-offset: 6px;
-        }
-        text-editor:focus {
-            overflow-y: visible;
-            outline: 4px solid #ff9a8d;
-            outline-offset: 6px;
-        }
-        [editimgid]:hover {
-             outline: 4px solid #aed6dc;
-            outline-offset: 6px;
-        }
-        `;
-        iframe.current.contentDocument.head.appendChild(style);
-    };
-
     const logOut = () => {
         axios.get('./api/logOut.php').then(() => {
             window.location.replace('/');
         });
     };
 
-    const onToggleModalSave = () => {
-        setOpenModalSave((prev) => !prev);
-    };
-    const onToggleModalChoose = () => {
-        setOpenModalChoose((prev) => !prev);
-    };
-    const onToggleModalBackup = () => {
-        setOpenModalBackup((prev) => !prev);
-    };
-    const onToggleModalMeta = () => {
-        setOpenModalMeta((prev) => !prev);
-    };
-    const onToggleModalLogout = () => {
-        setOpenModalLogout((prev) => !prev);
-    };
     let spinner = loading ? <Spinner active /> : <Spinner />;
     if (!auth) {
         return <Login setAuth={setAuth} />;
@@ -224,52 +168,14 @@ const Editor = () => {
                 accept="image/*"
                 style={{ display: 'none' }}
             ></input>
-            <DevPanel
-                onToggleModalSave={onToggleModalSave}
-                onToggleModalChoose={onToggleModalChoose}
-                onToggleModalBackup={onToggleModalBackup}
-                onToggleModalMeta={onToggleModalMeta}
-                onToggleModalLogout={onToggleModalLogout}
-            />
+            <DevPanel />
             {spinner}
-            <ModalSave
-                onConfirmFunc={onSave}
-                openModal={openModalSave}
-                onToggleModal={onToggleModalSave}
-                contentText={{
-                    text: 'Сохранение',
-                    descr: 'Вы уверены, что хотите сохранить изменения ?',
-                    btnCofirm: 'Сохранить',
-                }}
-            />
-            <ModalSave
-                onConfirmFunc={logOut}
-                openModal={openModalLogout}
-                onToggleModal={onToggleModalLogout}
-                contentText={{
-                    text: 'Выход',
-                    descr: 'Вы уверены, что хотите сохранить выйти ? ',
-                    btnCofirm: 'Выйти',
-                }}
-            />
-            <ChooseModal
-                openModal={openModalChoose}
-                onToggleModal={onToggleModalChoose}
-                data={pageList}
-                redirect={init}
-                title="Выберите страницу для редактирования :"
-            />
-            <ChooseModal
-                openModal={openModalBackup}
-                onToggleModal={onToggleModalBackup}
-                data={backupList}
-                redirect={restoreBackup}
-                title="Выберите Backup для восстановления :"
-            />
             {virtualDom.current ? (
-                <EditorMeta
-                    openModal={openModalMeta}
-                    onToggleModal={onToggleModalMeta}
+                <Modals
+                    onSave={onSave}
+                    logOut={logOut}
+                    init={init}
+                    restoreBackup={restoreBackup}
                     virtualDom={virtualDom.current}
                 />
             ) : null}
