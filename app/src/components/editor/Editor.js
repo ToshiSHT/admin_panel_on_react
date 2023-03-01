@@ -30,6 +30,7 @@ const Editor = () => {
     const [openModalChoose, setOpenModalChoose] = useState(false);
     const [openModalBackup, setOpenModalBackup] = useState(false);
     const [openModalMeta, setOpenModalMeta] = useState(false);
+    const [openModalLogout, setOpenModalLogout] = useState(false);
     const [auth, setAuth] = useState(false);
     const [loading, setLoading] = useState(true);
     const { confirm } = Modal;
@@ -187,6 +188,12 @@ const Editor = () => {
         iframe.current.contentDocument.head.appendChild(style);
     };
 
+    const logOut = () => {
+        axios.get('./api/logOut.php').then(() => {
+            window.location.replace('/');
+        });
+    };
+
     const onToggleModalSave = () => {
         setOpenModalSave((prev) => !prev);
     };
@@ -198,6 +205,9 @@ const Editor = () => {
     };
     const onToggleModalMeta = () => {
         setOpenModalMeta((prev) => !prev);
+    };
+    const onToggleModalLogout = () => {
+        setOpenModalLogout((prev) => !prev);
     };
     let spinner = loading ? <Spinner active /> : <Spinner />;
     if (!auth) {
@@ -219,12 +229,28 @@ const Editor = () => {
                 onToggleModalChoose={onToggleModalChoose}
                 onToggleModalBackup={onToggleModalBackup}
                 onToggleModalMeta={onToggleModalMeta}
+                onToggleModalLogout={onToggleModalLogout}
             />
             {spinner}
             <ModalSave
-                onSave={onSave}
-                openModalSave={openModalSave}
-                onToggleModalSave={onToggleModalSave}
+                onConfirmFunc={onSave}
+                openModal={openModalSave}
+                onToggleModal={onToggleModalSave}
+                contentText={{
+                    text: 'Сохранение',
+                    descr: 'Вы уверены, что хотите сохранить изменения ?',
+                    btnCofirm: 'Сохранить',
+                }}
+            />
+            <ModalSave
+                onConfirmFunc={logOut}
+                openModal={openModalLogout}
+                onToggleModal={onToggleModalLogout}
+                contentText={{
+                    text: 'Выход',
+                    descr: 'Вы уверены, что хотите сохранить выйти ? ',
+                    btnCofirm: 'Выйти',
+                }}
             />
             <ChooseModal
                 openModal={openModalChoose}

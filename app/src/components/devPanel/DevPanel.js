@@ -5,6 +5,7 @@ const DevPanel = ({
     onToggleModalSave,
     onToggleModalBackup,
     onToggleModalMeta,
+    onToggleModalLogout,
 }) => {
     return (
         <div className="admin_panel">
@@ -21,6 +22,9 @@ const DevPanel = ({
                 </Button>
                 <Button type="primary" onClick={onToggleModalSave}>
                     Сохранить
+                </Button>
+                <Button type="default" onClick={onToggleModalLogout}>
+                    Выход
                 </Button>
             </Space>
         </div>

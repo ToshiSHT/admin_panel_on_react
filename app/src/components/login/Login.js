@@ -49,10 +49,6 @@ const Login = ({ setAuth }) => {
                                 required: true,
                                 message: 'Пожалуйста введите имя!',
                             },
-                            {
-                                boolean: { loginError },
-                                message: ' введите имя!',
-                            },
                         ]}
                     >
                         <Input
