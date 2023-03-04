@@ -29,6 +29,5 @@ export const textEdit = (elem, virtualElem) => {
     };
     const onInput = () => {
         virtualElem.textContent = elem.textContent;
-        console.log(virtualElem);
     };
 };

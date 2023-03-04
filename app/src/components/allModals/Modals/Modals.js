@@ -1,4 +1,5 @@
 import React from 'react';
+import axios from 'axios';
 import ConfirmModal from '../confirmModal/ConfirmModal.js';
 import ChooseModal from '../chooseModal/ChooseModal';
 import EditorMeta from '../../editorMeta/EditorMeta.js';
@@ -11,10 +12,15 @@ import {
     toggleModalMeta,
 } from '../../../store/slices/openModalSlice.js';
 
-const Modals = ({ onSave, logOut, init, restoreBackup, virtualDom }) => {
+const Modals = ({ onSave, init, restoreBackup, virtualDom }) => {
     const dispatch = useDispatch();
     const modalsState = useSelector((state) => state.modals);
     const dataList = useSelector((state) => state.dataList);
+    const logOut = () => {
+        axios.get('./api/logOut.php').then(() => {
+            window.location.replace('/');
+        });
+    };
 
     return (
         <>

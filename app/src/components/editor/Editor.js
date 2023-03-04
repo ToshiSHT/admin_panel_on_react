@@ -10,13 +10,12 @@ import {
     wrapImages,
     unwrapImages,
 } from '../../helpers/dom-helpers.js';
+import { enableEditing } from '../../helpers/enableEditing.js';
 import '../../helpers/iframeLoader.js';
-import { textEdit } from '../../helpers/textEdit.js';
 import Spinner from '../spinner/Spinner.js';
 import DevPanel from '../devPanel/DevPanel.js';
 import { ExclamationCircleFilled } from '@ant-design/icons';
 import { Modal, message } from 'antd';
-import { editorImage } from '../../helpers/editorImage.js';
 import { natification } from '../../helpers/natification.js';
 import Login from '../login/Login.js';
 import Modals from '../allModals/Modals/Modals.js';
@@ -42,7 +41,6 @@ const Editor = () => {
     };
     const checkedAuth = () => {
         axios.get('./api/checkAuth.php').then((res) => {
-            console.log(res.data);
             setAuth(res.data.auth);
         });
     };
@@ -68,7 +66,15 @@ const Editor = () => {
             .then((html) => axios.post('./api/saveTempPage.php', { html }))
             .then(() => iframe.current.load('../aadawqe324we1ras.html'))
             .then(() => axios.post('./api/deleteTempPage.php'))
-            .then(() => enableEditing())
+            .then(() =>
+                enableEditing(
+                    iframe.current,
+                    virtualDom.current,
+                    isLoading,
+                    isLoaded,
+                    messageApi
+                )
+            )
             .then(() => injectStyles(iframe.current))
             .then(isLoaded);
 
@@ -126,33 +132,6 @@ const Editor = () => {
             .finally(isLoaded);
     };
 
-    const enableEditing = () => {
-        iframe.current.contentDocument.body
-            .querySelectorAll('text-editor')
-            .forEach((elem) => {
-                const id = elem.getAttribute('nodeid');
-                const virtualElem = virtualDom.current.body.querySelector(
-                    `[nodeid="${id}"]`
-                );
-                textEdit(elem, virtualElem);
-            });
-        iframe.current.contentDocument.body
-            .querySelectorAll('[editimgid]')
-            .forEach((elem) => {
-                const id = elem.getAttribute('editimgid');
-                const virtualElem = virtualDom.current.body.querySelector(
-                    `[editimgid="${id}"]`
-                );
-                editorImage(elem, virtualElem, isLoading, isLoaded, messageApi);
-            });
-    };
-
-    const logOut = () => {
-        axios.get('./api/logOut.php').then(() => {
-            window.location.replace('/');
-        });
-    };
-
     let spinner = loading ? <Spinner active /> : <Spinner />;
     if (!auth) {
         return <Login setAuth={setAuth} />;
@@ -173,7 +152,6 @@ const Editor = () => {
             {virtualDom.current ? (
                 <Modals
                     onSave={onSave}
-                    logOut={logOut}
                     init={init}
                     restoreBackup={restoreBackup}
                     virtualDom={virtualDom.current}
